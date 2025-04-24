@@ -1,0 +1,5 @@
+email@example.com
+123-456-7890
+$100.50
+https://example.com
+user_name
