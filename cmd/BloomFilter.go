@@ -35,30 +35,49 @@ func NewBloomFilter(size int, hashCount int) *BloomFilter {
 
 func (bf *BloomFilter) AddFile(filePath string) {
 	file, err := os.Open(filePath)
-
-	var words []string
-
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer file.Close()
 
-	Scanner := bufio.NewScanner(file)
-	Scanner.Split(bufio.ScanWords)
+	var words []string
+	collisionMap := make(map[int]map[uint64][]string)
+	for i := range bf.hashes {
+		collisionMap[i] = make(map[uint64][]string)
+	}
 
-	for Scanner.Scan() {
-		words = append(words, Scanner.Text())
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanWords)
+
+	for scanner.Scan() {
+		words = append(words, scanner.Text())
 	}
 
 	for _, word := range words {
-		for _, hashFunc := range bf.hashes {
+		for hashFuncIndex, hashFunc := range bf.hashes {
 			hashFunc.Reset()
 			hashFunc.Write([]byte(word))
-			index := hashFunc.Sum64() % uint64(bf.size)
+			hash := hashFunc.Sum64()
+			index := hash % uint64(bf.size)
+
+			collisionMap[hashFuncIndex][hash] = append(collisionMap[hashFuncIndex][hash], word)
 			bf.bitArray[index] = true
 		}
 	}
 
-	if err := Scanner.Err(); err != nil {
+	//print collisions
+	for hashFuncIndex, hashToWords := range collisionMap {
+		for hash, words := range hashToWords {
+			if len(words) > 1 {
+				fmt.Printf("Collision in hash%d (%x):\n", hashFuncIndex+1, hash)
+				for _, word := range words {
+					fmt.Println(" -", word)
+				}
+			}
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -85,7 +104,7 @@ var BloomFilterCmd = &cobra.Command{
 Example: bloomfilter 1000 3 data.txt hello`,
 	Args: cobra.ExactArgs(4),
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("\nBloomFilter called\n")
+		fmt.Println("BloomFilter called")
 
 		size, err := strconv.Atoi(args[0])
 		if err != nil {
@@ -104,7 +123,7 @@ Example: bloomfilter 1000 3 data.txt hello`,
 		BloomFilter.AddFile(filePath)
 		BloomFilter.Check(checkWord)
 
-		fmt.Println("\nBloomFilter end")
+		fmt.Println("BloomFilter end")
 	},
 }
 
