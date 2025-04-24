@@ -7,6 +7,10 @@
 ## Project Overview (EN)
 
 Implementation of a probabilistic Bloom Filter data structure in Go with command line interface.
+- CLI interface
+- Hash collision detection
+- False positive probability calculation
+- Memory-efficient design
 
 ## 📦 Installation
 
@@ -33,6 +37,21 @@ file - Path to text file
 
 word - Word to check
 
+##📊 Key Features
+### Hash Collision Detection
+```bash
+Collision in hash1 (14dfb87eecce7a1d):
+ - data
+ - data
+ - data
+Collision in hash1 (1ccad37ef114ac9a):
+ - code
+ - code
+```
+### False Positive Probability
+```bash
+The probability of a false positive = 0.0800723571067731
+```
 ### Example:
 ```bash
 bloomfilter 1000 3 words.txt hello
@@ -64,7 +83,11 @@ probabilistic data structure
 
  + File reading with word-by-word scanning
 
+ + Collision Handling: Automatic reporting per hash function
+
  + Memory-efficient design
+
+ + Accuracy: Configurable false positive rate
 
 ## Обзор проекта (RU)
 
