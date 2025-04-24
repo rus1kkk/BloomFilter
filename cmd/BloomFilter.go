@@ -6,6 +6,7 @@ import (
 	"hash"
 	"hash/fnv"
 	"log"
+	"math"
 	"os"
 	"strconv"
 
@@ -13,9 +14,10 @@ import (
 )
 
 type BloomFilter struct {
-	size     int
-	hashes   []hash.Hash64
-	bitArray []bool
+	size        int
+	hashes      []hash.Hash64
+	bitArray    []bool
+	numElements int
 }
 
 func NewBloomFilter(size int, hashCount int) *BloomFilter {
@@ -27,9 +29,10 @@ func NewBloomFilter(size int, hashCount int) *BloomFilter {
 	}
 
 	return &BloomFilter{
-		size:     size,
-		bitArray: bitArray,
-		hashes:   hashes,
+		size:        size,
+		bitArray:    bitArray,
+		hashes:      hashes,
+		numElements: 0,
 	}
 }
 
@@ -62,6 +65,7 @@ func (bf *BloomFilter) AddFile(filePath string) {
 
 			collisionMap[hashFuncIndex][hash] = append(collisionMap[hashFuncIndex][hash], word)
 			bf.bitArray[index] = true
+			bf.numElements++
 		}
 	}
 
@@ -96,6 +100,13 @@ func (bf *BloomFilter) Check(word string) bool {
 	return true
 }
 
+func (bf *BloomFilter) FalsePositiveProbability() float64 {
+	if bf.numElements == 0 {
+		return 0.0
+	}
+	return math.Pow(1-math.Exp(-float64(len(bf.hashes)*bf.numElements)/float64(bf.size)), float64(len(bf.hashes)))
+}
+
 // BloomFilterCmd represents the BloomFilter command
 var BloomFilterCmd = &cobra.Command{
 	Use:   "bloomfilter",
@@ -122,6 +133,8 @@ Example: bloomfilter 1000 3 data.txt hello`,
 		BloomFilter := NewBloomFilter(size, hashCount)
 		BloomFilter.AddFile(filePath)
 		BloomFilter.Check(checkWord)
+		fmt.Print("The probability of a false positive = ")
+		fmt.Println(BloomFilter.FalsePositiveProbability())
 
 		fmt.Println("BloomFilter end")
 	},
