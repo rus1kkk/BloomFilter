@@ -88,7 +88,7 @@ func (bf *BloomFilter) Check(word string) bool {
 		hashFunc.Write([]byte(word))
 		index := hashFunc.Sum64() % uint64(bf.size)
 		if !bf.bitArray[index] {
-			fmt.Printf("%s is DEFINITELY NOT in the set", word)
+			fmt.Printf("%s is DEFINITELY NOT in the set \n", word)
 			return false
 		}
 	}
